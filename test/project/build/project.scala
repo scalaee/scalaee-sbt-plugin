@@ -12,3 +12,4 @@ class ScalaEESBTPluginTestProject(info: ProjectInfo) extends WebProfileJEEProjec
 
   val x = "javax" % "javaee-api" % "6.0" % "provided"
 }
+

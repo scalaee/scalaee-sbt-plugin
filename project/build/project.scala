@@ -16,7 +16,7 @@ class ScalaEESBTPluginProject(info: ProjectInfo) extends PluginProject(info) {
   val glassfishExtrasModuleConfig = ModuleConfiguration("org.glassfish.extras", glassfishRepo)
 
   // Dependencies (compile)
-  val glassfishEmbeddedAll = "org.glassfish.extras" % "glassfish-embedded-all" % "3.0.1"
+  val glassfishEmbeddedAll = "org.glassfish.extras" % "glassfish-embedded-all" % "3.1-b23"
 
   // Dependencies (test)
   val specs = "org.scala-tools.testing" % "specs" % "1.6.2.1" % "test" withSources

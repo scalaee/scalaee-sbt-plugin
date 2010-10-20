@@ -8,28 +8,28 @@
 package org.scalaee.sbtjeeplugin
 
 import org.glassfish.api.deployment.DeployCommandParameters
-import org.glassfish.api.embedded.{ ContainerBuilder, Server }
 import sbt._
+import org.glassfish.api.embedded. {ScatteredArchive, ContainerBuilder, Server}
+import java.io.File
 
-object WebProfileJEEProject {
+
+class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
 
   private val GlassFishAlreadyStarted = "GlassFish already started!"
 
   private val GlassFishNotStarted = "GlassFish not started!"
-}
 
-class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
- import WebProfileJEEProject._
-
-  System.setProperty("glassfish.embedded.tmpdir", this.outputPath.absolutePath)
+  private var serverOption: Option[Server] = None
 
   final val glassfishRun = glassfishRunAction
 
   final val glassfishStop = glassfishStopAction
 
+  System.setProperty("glassfish.embedded.tmpdir", this.outputPath.absolutePath)
+
   protected def glassfishRunAction =
     task {
-      try {
+      try { 
         log.debug("Trying to start GlassFish ....")
 
         if (serverOption.isDefined) {
@@ -38,17 +38,17 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
         else {
           val server = new Server.Builder(glassfishServerID).build
           serverOption = Some(server)
-          server.createPort(glassfishPort)
-          server.addContainer(server createConfig ContainerBuilder.Type.web)
-          server.addContainer(server createConfig ContainerBuilder.Type.ejb)
+          val port = server.createPort(glassfishPort)
+          server.addContainer(server.createConfig(ContainerBuilder.Type.web)).bind(port, "http")
+          server.addContainer(server.createConfig(ContainerBuilder.Type.ejb))
+
           server.start()
           log.info("Successfully started GlassFish.")
 
-          log.debug("Trying to deploy project ....")
-          val war = new java.io.File(temporaryWarPath.absolutePath)
+          log.debug("Deploying project ....")
           val params = new DeployCommandParameters
           params.contextroot = glassfishContextRoot
-          server.getDeployer.deploy(war, params)
+          server.getDeployer.deploy(new File(temporaryWarPath.absolutePath), params)
           log.info("Successfully deployed project under context root: %s" format params.contextroot)
 
           None
@@ -85,5 +85,4 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
 
   protected def glassfishServerID = organization
 
-  private var serverOption: Option[Server] = None
 }

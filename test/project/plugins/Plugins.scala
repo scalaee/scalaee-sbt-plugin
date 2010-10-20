@@ -17,3 +17,4 @@ class Plugins(info: ProjectInfo) extends PluginDefinition(info) {
   // Dependencies
   val scalaEESBTPlugin = "org.scalaee" % "scalaee-sbt-plugin" % "0.1-SNAPSHOT"
 }
+
