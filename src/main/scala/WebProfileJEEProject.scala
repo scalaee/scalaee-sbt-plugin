@@ -9,11 +9,14 @@ package org.scalaee.sbtjeeplugin
 
 import org.glassfish.api.deployment.DeployCommandParameters
 import sbt._
-import org.glassfish.api.embedded. {ContainerBuilder, Server}
 import java.io.File
+import org.glassfish.api.embedded. {EmbeddedFileSystem, ContainerBuilder, Server}
 
 
-case class DeployedApplication(server: Server, location: File, params: DeployCommandParameters)
+case class DeployedApplication(server: Server,
+                               name: String,
+                               location: File,
+                               params: DeployCommandParameters)
 
 
 class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
@@ -24,9 +27,19 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
 
   private var deployedApplicationOption: Option[DeployedApplication] = None
 
+  protected def glassfishContextRoot = name
+
+  protected def glassfishPort = 8080
+
+  protected def glassfishServerID = organization
+
+  protected def glassfishInstallRoot = "glassfishInstance"
+
   final val glassfishRun = glassfishRunAction
 
   final val glassfishStop = glassfishStopAction
+
+  final val glassfishRedeploy = glassfishRedeployAction
 
   System.setProperty("glassfish.embedded.tmpdir", this.outputPath.absolutePath)
 
@@ -39,11 +52,26 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
           Some(GlassFishAlreadyStarted)
         }
         else {
-          val server = new Server.Builder(glassfishServerID).build
+          val builder = new Server.Builder(glassfishServerID)
+
+          val installDir = new File(outputDirectoryName, glassfishInstallRoot)
+          installDir.mkdir()
+
+          val modulesDir = new File(installDir, "modules")
+          modulesDir.mkdir() // Required to avoid NPE during startup
+
+          val domainDir = new File(installDir, "domains/domain1")
+
+          val efsb = new EmbeddedFileSystem.Builder()
+          efsb.installRoot(installDir)
+          efsb.instanceRoot(domainDir)
+          val efs = efsb.build()
+          builder.embeddedFileSystem(efs)
+
+          val server = builder.build()
           val port = server.createPort(glassfishPort)
           server.addContainer(server.createConfig(ContainerBuilder.Type.web)).bind(port, "http")
           server.addContainer(server.createConfig(ContainerBuilder.Type.ejb))
-
           server.start()
           log.info("Successfully started GlassFish.")
 
@@ -51,8 +79,10 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
           val war = new File(temporaryWarPath.absolutePath)
           val params = new DeployCommandParameters
           params.contextroot = glassfishContextRoot
-          server.getDeployer.deploy(war, params)
-          deployedApplicationOption = Some(DeployedApplication(server, war, params))
+          params.name = glassfishContextRoot
+          val name = server.getDeployer.deploy(war, params)
+          server.getDeployer.setAutoDeploy(true)
+          deployedApplicationOption = Some(DeployedApplication(server, name, war, params))
           log.info("Successfully deployed project under context root: %s" format params.contextroot)
 
           None
@@ -66,7 +96,7 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
   protected def glassfishStopAction =
     task {
       try {
-        log.debug("Trying to stop GlassFish ....")
+        log.debug("Stopping GlassFish ....")
 
         if (deployedApplicationOption.isEmpty) {
           Some(GlassFishNotStarted)
@@ -84,10 +114,28 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
       }
     } describedAs "Stops GlassFish."
 
-  protected def glassfishContextRoot = name
+  protected def glassfishRedeployAction =
+    task {
+      try {
+        log.debug("Redeploying application in GlassFish ....")
 
-  protected def glassfishPort = 8080
-
-  protected def glassfishServerID = organization
+        if (deployedApplicationOption.isEmpty) {
+          Some(GlassFishNotStarted)
+        }
+        else {
+          val s = deployedApplicationOption.get.server
+          val n = deployedApplicationOption.get.name
+          val l = deployedApplicationOption.get.location
+          val p = deployedApplicationOption.get.params
+          s.getDeployer.undeploy(n, null)
+          s.getDeployer.deploy(l, p)
+          log.info("Successfully redeployed application in GlassFish.")
+          None
+        }
+      } catch {
+        case e =>
+          Some("Error when trying to redeploy application in GlassFish: %s." format e.getMessage)
+      }
+    } dependsOn prepareWebapp describedAs "Redeploy application in Glassfish."
 
 }

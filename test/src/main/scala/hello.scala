@@ -25,4 +25,9 @@ class HelloBean {
 class HelloEJB {
 
   def hello = "Hello from an EJB!"
+
 }
+
+
+
+
