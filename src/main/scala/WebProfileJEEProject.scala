@@ -9,8 +9,11 @@ package org.scalaee.sbtjeeplugin
 
 import org.glassfish.api.deployment.DeployCommandParameters
 import sbt._
-import org.glassfish.api.embedded. {ScatteredArchive, ContainerBuilder, Server}
+import org.glassfish.api.embedded. {ContainerBuilder, Server}
 import java.io.File
+
+
+case class DeployedApplication(server: Server, location: File, params: DeployCommandParameters)
 
 
 class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
@@ -19,7 +22,7 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
 
   private val GlassFishNotStarted = "GlassFish not started!"
 
-  private var serverOption: Option[Server] = None
+  private var deployedApplicationOption: Option[DeployedApplication] = None
 
   final val glassfishRun = glassfishRunAction
 
@@ -32,12 +35,11 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
       try { 
         log.debug("Trying to start GlassFish ....")
 
-        if (serverOption.isDefined) {
+        if (deployedApplicationOption.isDefined) {
           Some(GlassFishAlreadyStarted)
         }
         else {
           val server = new Server.Builder(glassfishServerID).build
-          serverOption = Some(server)
           val port = server.createPort(glassfishPort)
           server.addContainer(server.createConfig(ContainerBuilder.Type.web)).bind(port, "http")
           server.addContainer(server.createConfig(ContainerBuilder.Type.ejb))
@@ -50,6 +52,7 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
           val params = new DeployCommandParameters
           params.contextroot = glassfishContextRoot
           server.getDeployer.deploy(war, params)
+          deployedApplicationOption = Some(DeployedApplication(server, war, params))
           log.info("Successfully deployed project under context root: %s" format params.contextroot)
 
           None
@@ -65,12 +68,13 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
       try {
         log.debug("Trying to stop GlassFish ....")
 
-        if (serverOption.isEmpty) {
+        if (deployedApplicationOption.isEmpty) {
           Some(GlassFishNotStarted)
         }
         else {
-          serverOption.get.stop
-          serverOption = None
+          deployedApplicationOption.get.server.stop()
+          deployedApplicationOption = None
+
           log.info("Successfully stopped GlassFish.")
           None
         }
