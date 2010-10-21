@@ -46,9 +46,10 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
           log.info("Successfully started GlassFish.")
 
           log.debug("Deploying project ....")
+          val war = new File(temporaryWarPath.absolutePath)
           val params = new DeployCommandParameters
           params.contextroot = glassfishContextRoot
-          server.getDeployer.deploy(new File(temporaryWarPath.absolutePath), params)
+          server.getDeployer.deploy(war, params)
           log.info("Successfully deployed project under context root: %s" format params.contextroot)
 
           None
