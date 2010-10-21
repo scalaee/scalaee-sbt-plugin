@@ -33,7 +33,7 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
 
   protected def glassfishServerID = organization
 
-  protected def glassfishInstallRoot = "glassfishInstance"
+  protected def glassfishInstallRoot = outputDirectoryName + File.separator + "glassfishInstance"
 
   final val glassfishRun = glassfishRunAction
 
@@ -54,7 +54,7 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
         else {
           val builder = new Server.Builder(glassfishServerID)
 
-          val installDir = new File(outputDirectoryName, glassfishInstallRoot)
+          val installDir = new File(glassfishInstallRoot)
           installDir.mkdir()
 
           val modulesDir = new File(installDir, "modules")
