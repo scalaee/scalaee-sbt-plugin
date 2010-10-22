@@ -33,15 +33,15 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
 
   protected def glassfishServerID = organization
 
-  protected def glassfishInstallRoot = outputDirectoryName + File.separator + "glassfishInstance"
+  protected def glassfishInstallDir = outputDirectoryName / "glassfishInstance"
+
+  protected def glassfishDomainDir = glassfishInstallDir / "domains" / "domain1"
 
   final val glassfishRun = glassfishRunAction
 
   final val glassfishStop = glassfishStopAction
 
   final val glassfishRedeploy = glassfishRedeployAction
-
-  System.setProperty("glassfish.embedded.tmpdir", this.outputPath.absolutePath)
 
   protected def glassfishRunAction =
     task {
@@ -53,18 +53,18 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
         }
         else {
           val builder = new Server.Builder(glassfishServerID)
+          val efsb = new EmbeddedFileSystem.Builder()
 
-          val installDir = new File(glassfishInstallRoot)
+          val installDir = glassfishInstallDir.asFile
           installDir.mkdir()
+          efsb.installRoot(installDir)
 
           val modulesDir = new File(installDir, "modules")
           modulesDir.mkdir() // Required to avoid NPE during startup
 
-          val domainDir = new File(installDir, "domains/domain1")
-
-          val efsb = new EmbeddedFileSystem.Builder()
-          efsb.installRoot(installDir)
+          val domainDir = glassfishDomainDir.asFile
           efsb.instanceRoot(domainDir)
+
           val efs = efsb.build()
           builder.embeddedFileSystem(efs)
 
@@ -88,8 +88,10 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
           None
         }
       } catch {
-        case e =>
+        case e => {
+          e.printStackTrace()
           Some("Error when trying to start GlassFish: %s." format e.getMessage)
+        }
       }
     } dependsOn prepareWebapp describedAs "Starts GlassFish."
 
