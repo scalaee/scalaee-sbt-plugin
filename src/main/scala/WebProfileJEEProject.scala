@@ -7,10 +7,11 @@
  */
 package org.scalaee.sbtjeeplugin
 
-import org.glassfish.api.deployment.DeployCommandParameters
 import sbt._
+import Process._
+import org.glassfish.api.deployment.DeployCommandParameters
 import java.io.File
-import org.glassfish.api.embedded. {EmbeddedFileSystem, ContainerBuilder, Server}
+import org.glassfish.api.embedded.{EmbeddedFileSystem, ContainerBuilder, Server}
 
 
 case class DeployedApplication(server: Server,
@@ -37,15 +38,22 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
 
   protected def glassfishDomainDir = glassfishInstallDir / "domains" / "domain1"
 
+  protected def glassfishAsadmin: Option[String] = None
+
   final val glassfishRun = glassfishRunAction
 
   final val glassfishStop = glassfishStopAction
 
   final val glassfishRedeploy = glassfishRedeployAction
 
+  final val glassfishAsadminDeploy = glassfishAsadminDeployAction
+
+  protected def glassfishAsadminOptions = List("--force=true")
+
   protected def glassfishRunAction =
-    task {
-      try { 
+    task{
+      try
+      {
         log.debug("Trying to start GlassFish ....")
 
         if (deployedApplicationOption.isDefined) {
@@ -96,8 +104,9 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
     } dependsOn prepareWebapp describedAs "Starts GlassFish."
 
   protected def glassfishStopAction =
-    task {
-      try {
+    task{
+      try
+      {
         log.debug("Stopping GlassFish ....")
 
         if (deployedApplicationOption.isEmpty) {
@@ -117,8 +126,9 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
     } describedAs "Stops GlassFish."
 
   protected def glassfishRedeployAction =
-    task {
-      try {
+    task{
+      try
+      {
         log.debug("Redeploying application in GlassFish ....")
 
         if (deployedApplicationOption.isEmpty) {
@@ -139,5 +149,24 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
           Some("Error when trying to redeploy application in GlassFish: %s." format e.getMessage)
       }
     } dependsOn prepareWebapp describedAs "Redeploy application in Glassfish."
+
+  protected def glassfishAsadminDeployAction =
+    task{
+      glassfishAsadmin match {
+        case Some(asadmin) => {
+          val cmd = glassfishAsadmin.get +
+            " deploy " +
+            glassfishAsadminOptions.mkString(" ") +
+            " " +
+            temporaryWarPath.absolutePath
+
+          cmd ! log
+          None
+        }
+        case None => {
+          Some("Specify the asadmin command location with the 'glassfishAsadmin' setting.")
+        }
+      }
+    } dependsOn prepareWebapp describedAs "Deploy application using the asadmin command."
 
 }
