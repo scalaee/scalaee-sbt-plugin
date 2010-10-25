@@ -7,26 +7,27 @@
  */
 package org.scalaee.sbtjeeplugin
 
+import java.io.File
+import org.glassfish.api.deployment.DeployCommandParameters
+import org.glassfish.api.embedded.{ EmbeddedFileSystem, ContainerBuilder, Server }
 import sbt._
 import Process._
-import org.glassfish.api.deployment.DeployCommandParameters
-import java.io.File
-import org.glassfish.api.embedded.{EmbeddedFileSystem, ContainerBuilder, Server}
 
-
-case class DeployedApplication(server: Server,
-                               name: String,
-                               location: File,
-                               params: DeployCommandParameters)
-
+case class DeployedApplication(
+  server: Server,
+  name: String,
+  location: File,
+  params: DeployCommandParameters)
 
 class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
 
-  private val GlassFishAlreadyStarted = "GlassFish already started!"
+  final val glassfishRun = glassfishRunAction
 
-  private val GlassFishNotStarted = "GlassFish not started!"
+  final val glassfishStop = glassfishStopAction
 
-  private var deployedApplicationOption: Option[DeployedApplication] = None
+  final val glassfishRedeploy = glassfishRedeployAction
+
+  final val glassfishAsadminDeploy = glassfishAsadminDeployAction
 
   protected def glassfishContextRoot = name
 
@@ -40,14 +41,6 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
 
   protected def glassfishAsadmin: Option[String] = None
 
-  final val glassfishRun = glassfishRunAction
-
-  final val glassfishStop = glassfishStopAction
-
-  final val glassfishRedeploy = glassfishRedeployAction
-
-  final val glassfishAsadminDeploy = glassfishAsadminDeployAction
-
   protected def glassfishAsadminOptions = List(
     "--force=true",
     "--contextroot=" + glassfishContextRoot,
@@ -55,8 +48,7 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
 
   protected def glassfishRunAction =
     task{
-      try
-      {
+      try {
         log.debug("Trying to start GlassFish ....")
 
         if (deployedApplicationOption.isDefined) {
@@ -108,8 +100,7 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
 
   protected def glassfishStopAction =
     task{
-      try
-      {
+      try {
         log.debug("Stopping GlassFish ....")
 
         if (deployedApplicationOption.isEmpty) {
@@ -130,8 +121,7 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
 
   protected def glassfishRedeployAction =
     task{
-      try
-      {
+      try {
         log.debug("Redeploying application in GlassFish ....")
 
         if (deployedApplicationOption.isEmpty) {
@@ -154,7 +144,7 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
     } dependsOn prepareWebapp describedAs "Redeploy application in Glassfish."
 
   protected def glassfishAsadminDeployAction =
-    task{
+    task {
       glassfishAsadmin match {
         case Some(asadmin) => {
           val cmd = glassfishAsadmin.get +
@@ -173,4 +163,9 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
       }
     } dependsOn prepareWebapp describedAs "Deploy application using the asadmin command."
 
+  private val GlassFishAlreadyStarted = "GlassFish already started!"
+
+  private val GlassFishNotStarted = "GlassFish not started!"
+
+  private var deployedApplicationOption: Option[DeployedApplication] = None
 }
