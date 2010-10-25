@@ -48,7 +48,7 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
 
   final val glassfishAsadminDeploy = glassfishAsadminDeployAction
 
-  protected def glassfishAsadminOptions = List("--force=true")
+  protected def glassfishAsadminOptions = List("--force=true", "--contextroot=" + glassfishContextRoot)
 
   protected def glassfishRunAction =
     task{
@@ -161,6 +161,7 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
             temporaryWarPath.absolutePath
 
           cmd ! log
+          log.info("Deployed application with: '" + cmd + "'" )
           None
         }
         case None => {
