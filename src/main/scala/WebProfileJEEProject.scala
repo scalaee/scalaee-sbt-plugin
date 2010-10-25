@@ -48,7 +48,10 @@ class WebProfileJEEProject(info: ProjectInfo) extends DefaultWebProject(info) {
 
   final val glassfishAsadminDeploy = glassfishAsadminDeployAction
 
-  protected def glassfishAsadminOptions = List("--force=true", "--contextroot=" + glassfishContextRoot)
+  protected def glassfishAsadminOptions = List(
+    "--force=true",
+    "--contextroot=" + glassfishContextRoot,
+    "--name=" + name)
 
   protected def glassfishRunAction =
     task{
