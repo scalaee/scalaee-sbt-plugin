@@ -13,7 +13,8 @@ import Process._
 /**
  * JEE web profile project.
  */
-trait WebProfileJEEProject extends BasicWebScalaProject {
+trait WebProfileJEEProject {
+  this: BasicWebScalaProject =>
 
   /**
    * Deploys an application using the asadmin command delegating to {@link #glassfishAsadminDeployAction}.
