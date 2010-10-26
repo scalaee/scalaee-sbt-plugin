@@ -11,12 +11,12 @@ import Path._
 class ScalaEESBTPluginProject(info: ProjectInfo) extends PluginProject(info) {
 
   // Module configurations
-  def glassfishRepo = "GlassFish Maven Repository" at "http://maven.glassfish.org/content/groups/glassfish"
-  val glassfishModuleConfig = ModuleConfiguration("org.glassfish", glassfishRepo)
-  val glassfishExtrasModuleConfig = ModuleConfiguration("org.glassfish.extras", glassfishRepo)
+//  def glassfishRepo = "GlassFish Maven Repository" at "http://maven.glassfish.org/content/groups/glassfish"
+//  val glassfishModuleConfig = ModuleConfiguration("org.glassfish", glassfishRepo)
+//  val glassfishExtrasModuleConfig = ModuleConfiguration("org.glassfish.extras", glassfishRepo)
 
   // Dependencies (compile)
-  val glassfishEmbeddedAll = "org.glassfish.extras" % "glassfish-embedded-all" % "3.0.1"
+//  val glassfishEmbeddedAll = "org.glassfish.extras" % "glassfish-embedded-all" % "3.0.1"
 
   // Dependencies (test)
   val specs = "org.scala-tools.testing" % "specs" % "1.6.2.1" % "test" withSources
