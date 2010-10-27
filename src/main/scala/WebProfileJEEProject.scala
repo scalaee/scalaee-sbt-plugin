@@ -84,7 +84,7 @@ trait WebProfileJEEProject {
           glassfishAsadminRedeployOptions mkString " ",
           temporaryWarPath.absolutePath)
       execute(cmd)
-    } describedAs "Redeploys an application using the asadmin command."
+    } dependsOn prepareWebapp describedAs "Redeploys an application using the asadmin command."
 
   /**
    * Undeploys an application using the asadmin command.
