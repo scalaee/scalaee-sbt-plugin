@@ -8,8 +8,9 @@
 import org.scalaee.sbtjeeplugin.WebProfileJEEProject
 import sbt._
 
-class ScalaEESBTPluginTestProject(info: ProjectInfo) extends WebProfileJEEProject(info) {
+class ScalaEESBTPluginTestProject(info: ProjectInfo) extends DefaultWebProject(info) with WebProfileJEEProject {
 
   val x = "javax" % "javaee-api" % "6.0" % "provided"
+
 }
 

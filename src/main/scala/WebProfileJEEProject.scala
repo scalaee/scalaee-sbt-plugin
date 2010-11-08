@@ -15,7 +15,9 @@ import Process._
  * JEE web profile project.
  */
 trait WebProfileJEEProject {
+
   this: BasicWebScalaProject =>
+
 
   /**
    * Deploys an application using the asadmin command delegating to {@link #glassfishAsadminDeployAction}.
@@ -35,7 +37,7 @@ trait WebProfileJEEProject {
   /**
    * Specifies the location of the asadmin command.
    */
-  protected def glassfishAsadmin: String
+  lazy val glassfishAsadminPath = property[String]
 
   /**
    * Options for the asadmin command for deployment. Attention: Be sure you know what you are doing if you override this!
@@ -68,7 +70,7 @@ trait WebProfileJEEProject {
     task {
       val cmd =
         "%s deploy %s %s".format(
-          glassfishAsadmin,
+          glassfishAsadminPath.value,
           glassfishAsadminDeployOptions mkString " ",
           temporaryWarPath.absolutePath)
       execute(cmd)
@@ -81,7 +83,7 @@ trait WebProfileJEEProject {
     task {
       val cmd =
         "%s redeploy %s %s".format(
-          glassfishAsadmin,
+          glassfishAsadminPath.value,
           glassfishAsadminRedeployOptions mkString " ",
           temporaryWarPath.absolutePath)
       execute(cmd)
@@ -93,7 +95,7 @@ trait WebProfileJEEProject {
   protected def glassfishAsadminUndeployAction =
     task {
       val cmd =
-        "%s undeploy %s".format(glassfishAsadmin, glassfishAsadminUndeployOptions mkString " ")
+        "%s undeploy %s".format(glassfishAsadminPath.value, glassfishAsadminUndeployOptions mkString " ")
       execute(cmd)
     } describedAs "Undeploys an application using the asadmin command."
 
