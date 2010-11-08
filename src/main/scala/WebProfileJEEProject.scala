@@ -12,12 +12,9 @@ import Process._
 
 
 /**
- * JEE web profile project.
+ * Mixin for a JEE web profile project.
  */
-trait WebProfileJEEProject {
-
-  this: BasicWebScalaProject =>
-
+trait WebProfileJEEProject extends BasicWebScalaProject {
 
   /**
    * Deploys an application using the asadmin command delegating to {@link #glassfishAsadminDeployAction}.
@@ -38,6 +35,36 @@ trait WebProfileJEEProject {
    * Specifies the location of the asadmin command.
    */
   lazy val glassfishAsadminPath = property[String]
+
+  /**
+   * Removes the mainCompilePath and mainResource of all project dependecies and replaces them with jarPath.
+   */
+  override final def webappClasspath = {
+    val mainCompilePaths =
+      for {
+        p <- dependencies if (p.isInstanceOf[BasicScalaProject])
+      } yield p.asInstanceOf[BasicScalaProject].mainCompilePath
+    val mainResourcesOutputPaths =
+      for {
+        p <- dependencies if (p.isInstanceOf[BasicScalaProject])
+      } yield p.asInstanceOf[BasicScalaProject].mainResourcesOutputPath
+    val remaining = (mainCompilePaths ++ mainResourcesOutputPaths).foldLeft(super.webappClasspath) { _ --- _ }
+    val jarPaths =
+      for {
+        p <- dependencies if (p.isInstanceOf[BasicScalaProject])
+      } yield p.asInstanceOf[BasicScalaProject].jarPath
+    jarPaths.foldLeft(remaining) { _ +++ _ }
+  }
+
+  /**
+   * Makes prepareWebapp depend on `package` of all project dependecies.
+   */
+  override final def prepareWebappAction = {
+    val packages = for {
+      p <- dependencies if (p.isInstanceOf[BasicScalaProject])
+    } yield p.asInstanceOf[BasicScalaProject].`package`
+    super.prepareWebappAction dependsOn(packages.toSeq: _*)
+  }
 
   /**
    * Options for the asadmin command for deployment. Attention: Be sure you know what you are doing if you override this!
