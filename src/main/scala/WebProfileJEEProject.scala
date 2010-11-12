@@ -31,10 +31,18 @@ trait WebProfileJEEProject extends BasicWebScalaProject {
    */
   final val glassfishAsadminUndeploy = glassfishAsadminUndeployAction
 
-  /**
-   * Specifies the location of the asadmin command.
-   */
-  lazy val glassfishAsadminPath = property[String]
+  lazy val localGlassfish = new BasicEnvironment {
+
+    def log = WebProfileJEEProject.this.log
+
+    def envBackingPath = info.builderPath  / "local_glassfish.properties"
+
+    /**
+     * Specifies the location of the asadmin command.
+     */
+    lazy val glassfishAsadminPath = property[String]
+
+  }
 
   /**
    * Removes the mainCompilePath and mainResource of all project dependecies and replaces them with jarPath.
@@ -97,7 +105,7 @@ trait WebProfileJEEProject extends BasicWebScalaProject {
     task {
       val cmd =
         "%s deploy %s %s".format(
-          glassfishAsadminPath.value,
+          localGlassfish.glassfishAsadminPath.value,
           glassfishAsadminDeployOptions mkString " ",
           temporaryWarPath.absolutePath)
       execute(cmd)
@@ -110,7 +118,7 @@ trait WebProfileJEEProject extends BasicWebScalaProject {
     task {
       val cmd =
         "%s redeploy %s %s".format(
-          glassfishAsadminPath.value,
+          localGlassfish.glassfishAsadminPath.value,
           glassfishAsadminRedeployOptions mkString " ",
           temporaryWarPath.absolutePath)
       execute(cmd)
@@ -122,7 +130,8 @@ trait WebProfileJEEProject extends BasicWebScalaProject {
   protected def glassfishAsadminUndeployAction =
     task {
       val cmd =
-        "%s undeploy %s".format(glassfishAsadminPath.value, glassfishAsadminUndeployOptions mkString " ")
+        "%s undeploy %s".format(
+          localGlassfish.glassfishAsadminPath.value, glassfishAsadminUndeployOptions mkString " ")
       execute(cmd)
     } describedAs "Undeploys an application using the asadmin command."
 
